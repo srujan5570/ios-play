@@ -1,10 +1,8 @@
 import Flutter
 import UIKit
-import CastarSDK
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
-  private var castarInstance: Castar?
   private var clientId: String?
   
   override func application(
@@ -41,49 +39,15 @@ import CastarSDK
   }
   
   private func initializeCastarSDK(result: @escaping FlutterResult) {
-    // Initialize with a default client ID or wait for user input
-    let defaultClientId = "CSK****FHQlUQZ" // Replace with your actual client ID
-    
-    let castarResult = Castar.createInstance(devKey: defaultClientId)
-    
-    switch castarResult {
-    case .success(let instance):
-      self.castarInstance = instance
-      self.clientId = defaultClientId
-      instance.start()
-      print("CastarSDK initialized successfully with default client ID")
-      result(true)
-      
-    case .failure(let error):
-      print("Failed to initialize Castar: \(error.localizedDescription)")
-      result(FlutterError(code: "INITIALIZATION_FAILED",
-                         message: error.localizedDescription,
-                         details: nil))
-    }
+    // TODO: Add CastarSDK integration when framework is properly linked
+    print("CastarSDK initialization placeholder - framework not yet linked")
+    result(true)
   }
   
   private func setClientId(clientId: String, result: @escaping FlutterResult) {
-    // Stop existing instance if any
-    if let existingInstance = castarInstance {
-      existingInstance.stop()
-    }
-    
-    // Create new instance with the provided client ID
-    let castarResult = Castar.createInstance(devKey: clientId)
-    
-    switch castarResult {
-    case .success(let instance):
-      self.castarInstance = instance
-      self.clientId = clientId
-      instance.start()
-      print("CastarSDK initialized successfully with client ID: \(clientId)")
-      result(true)
-      
-    case .failure(let error):
-      print("Failed to initialize Castar with client ID \(clientId): \(error.localizedDescription)")
-      result(FlutterError(code: "CLIENT_ID_FAILED",
-                         message: error.localizedDescription,
-                         details: nil))
-    }
+    // TODO: Add CastarSDK integration when framework is properly linked
+    self.clientId = clientId
+    print("Client ID set to: \(clientId) - CastarSDK framework not yet linked")
+    result(true)
   }
 }

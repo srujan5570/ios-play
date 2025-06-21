@@ -20,7 +20,8 @@ jobs:
       - run: pod repo update
         working-directory: ios
 
-      - run: flutter build ios --release --no-codesign
+      - name: Build iOS App
+        run: flutter build ios --release --no-codesign
 
       - run: mkdir Payload
         working-directory: build/ios/iphoneos
@@ -41,10 +42,11 @@ jobs:
           tag_name: v1.0
           release_name: Release v1.0
           body: |
-            This is the first release of the Client ID Flutter app.
+            This is the first release of the CastarSDK Flutter app.
             
             ## Features
             - Modern Material Design 3 UI
+            - CastarSDK integration for monetization (framework linking in progress)
             - Client ID input with validation
             - Success feedback and notifications
             - iOS IPA build
