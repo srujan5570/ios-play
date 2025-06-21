@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,27 +11,35 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Client ID App',
+      title: 'CastarSDK Client ID App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const ClientIdScreen(),
+      home: const CastarSDKScreen(),
     );
   }
 }
 
-class ClientIdScreen extends StatefulWidget {
-  const ClientIdScreen({super.key});
+class CastarSDKScreen extends StatefulWidget {
+  const CastarSDKScreen({super.key});
 
   @override
-  State<ClientIdScreen> createState() => _ClientIdScreenState();
+  State<CastarSDKScreen> createState() => _CastarSDKScreenState();
 }
 
-class _ClientIdScreenState extends State<ClientIdScreen> {
+class _CastarSDKScreenState extends State<CastarSDKScreen> {
   final TextEditingController _clientIdController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String? _enteredClientId;
+  bool _isSDKInitialized = false;
+  static const platform = MethodChannel('com.example.castarsdk/channel');
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeSDK();
+  }
 
   @override
   void dispose() {
@@ -38,20 +47,48 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
     super.dispose();
   }
 
-  void _submitClientId() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _initializeSDK() async {
+    try {
+      final bool result = await platform.invokeMethod('initializeCastarSDK');
       setState(() {
-        _enteredClientId = _clientIdController.text;
+        _isSDKInitialized = result;
       });
+    } on PlatformException catch (e) {
+      print("Failed to initialize CastarSDK: '${e.message}'.");
+    }
+  }
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Client ID submitted: $_enteredClientId'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+  Future<void> _submitClientId() async {
+    if (_formKey.currentState!.validate()) {
+      final clientId = _clientIdController.text;
+
+      try {
+        final bool result = await platform.invokeMethod('setClientId', {
+          'clientId': clientId,
+        });
+
+        if (result) {
+          setState(() {
+            _enteredClientId = clientId;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('CastarSDK initialized with Client ID: $clientId'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } on PlatformException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.message}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -60,7 +97,7 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Client ID Manager'),
+        title: const Text('CastarSDK Manager'),
         centerTitle: true,
       ),
       body: Container(
@@ -68,7 +105,10 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.deepPurple.shade50, Colors.white],
+            colors: [
+              Colors.deepPurple.shade50,
+              Colors.white,
+            ],
           ),
         ),
         child: Padding(
@@ -79,6 +119,50 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // SDK Status
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _isSDKInitialized
+                        ? Colors.green.shade50
+                        : Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _isSDKInitialized
+                          ? Colors.green.shade200
+                          : Colors.orange.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isSDKInitialized ? Icons.check_circle : Icons.warning,
+                        color: _isSDKInitialized
+                            ? Colors.green.shade600
+                            : Colors.orange.shade600,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _isSDKInitialized
+                              ? 'CastarSDK is ready'
+                              : 'CastarSDK initializing...',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _isSDKInitialized
+                                ? Colors.green.shade700
+                                : Colors.orange.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
                 // App Icon
                 Container(
                   height: 120,
@@ -95,7 +179,7 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
                     ],
                   ),
                   child: Icon(
-                    Icons.person_outline,
+                    Icons.monetization_on_outlined,
                     size: 60,
                     color: Colors.deepPurple.shade600,
                   ),
@@ -105,7 +189,7 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
 
                 // Title
                 Text(
-                  'Enter Client ID',
+                  'CastarSDK Client ID',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.deepPurple.shade800,
@@ -117,10 +201,10 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
 
                 // Subtitle
                 Text(
-                  'Please provide your client identification number',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
+                  'Enter your CastarSDK client ID to start monetizing your app',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -142,9 +226,9 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
                     controller: _clientIdController,
                     decoration: InputDecoration(
                       labelText: 'Client ID',
-                      hintText: 'Enter your client ID here...',
+                      hintText: 'Enter your CastarSDK client ID...',
                       prefixIcon: Icon(
-                        Icons.badge_outlined,
+                        Icons.key,
                         color: Colors.deepPurple.shade400,
                       ),
                       border: OutlineInputBorder(
@@ -162,8 +246,8 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a client ID';
                       }
-                      if (value.length < 3) {
-                        return 'Client ID must be at least 3 characters';
+                      if (value.length < 5) {
+                        return 'Client ID must be at least 5 characters';
                       }
                       return null;
                     },
@@ -174,7 +258,7 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
 
                 // Submit Button
                 ElevatedButton(
-                  onPressed: _submitClientId,
+                  onPressed: _isSDKInitialized ? _submitClientId : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple.shade600,
                     foregroundColor: Colors.white,
@@ -185,8 +269,11 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
                     elevation: 8,
                   ),
                   child: const Text(
-                    'Submit Client ID',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    'Initialize CastarSDK',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
 
@@ -213,7 +300,7 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Client ID Submitted Successfully!',
+                          'CastarSDK Initialized Successfully!',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.green.shade700,
@@ -221,11 +308,20 @@ class _ClientIdScreenState extends State<ClientIdScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'ID: $_enteredClientId',
+                          'Client ID: $_enteredClientId',
                           style: TextStyle(
                             color: Colors.green.shade600,
                             fontFamily: 'monospace',
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Your app is now ready to generate revenue!',
+                          style: TextStyle(
+                            color: Colors.green.shade600,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
