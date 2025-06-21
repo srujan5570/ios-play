@@ -33,16 +33,20 @@ jobs:
         run: zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
 
+      - name: Generate Release Tag
+        id: tag
+        run: echo "tag=v$(date +'%Y.%m.%d.%H%M')" >> $GITHUB_OUTPUT
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v1.0
-          release_name: Release v1.0
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: Release ${{ steps.tag.outputs.tag }}
           body: |
-            This is the first release of the CastarSDK Flutter app.
+            This is a release of the CastarSDK Flutter app.
             
             ## Features
             - Modern Material Design 3 UI
@@ -50,6 +54,11 @@ jobs:
             - Client ID input with validation
             - Success feedback and notifications
             - iOS IPA build
+            
+            ## Build Info
+            - Build Date: $(date)
+            - Flutter Version: stable
+            - iOS Target: 12.0+
           draft: false
           prerelease: false
 
