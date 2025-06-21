@@ -32,11 +32,31 @@ jobs:
         run: zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
 
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/FlutterIpaExport.ipa
-          tag: v1.0
-          overwrite: true
-          body: "This is first release" 
+          tag_name: v1.0
+          release_name: Release v1.0
+          body: |
+            This is the first release of the Client ID Flutter app.
+            
+            ## Features
+            - Modern Material Design 3 UI
+            - Client ID input with validation
+            - Success feedback and notifications
+            - iOS IPA build
+          draft: false
+          prerelease: false
+
+      - name: Upload IPA to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/ios/iphoneos/FlutterIpaExport.ipa
+          asset_name: FlutterIpaExport.ipa
+          asset_content_type: application/octet-stream 
